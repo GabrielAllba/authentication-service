@@ -13,7 +13,7 @@ export class KafkaProducer implements OnModuleInit {
     await this.producer.connect();
   }
 
-  async emitEmailEvent(payload: { email: string; name: string }) {
+  async emitEmailEvent(payload: { email: string; username: string }) {
     await this.producer.send({
       topic: 'email-verification',
       messages: [{ value: JSON.stringify(payload) }],
