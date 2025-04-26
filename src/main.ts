@@ -1,8 +1,9 @@
-import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
-import { MicroserviceOptions, Transport } from '@nestjs/microservices';
+import { NestFactory } from '@nestjs/core';
+import { MicroserviceOptions } from '@nestjs/microservices';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
+import { KafkaConsumerService } from './app/messaging/kafka/kafka-consumer.service';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -17,16 +18,9 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
 
+  const kafkaConsumerService = app.get(KafkaConsumerService);
   app.connectMicroservice<MicroserviceOptions>({
-    transport: Transport.KAFKA,
-    options: {
-      client: {
-        brokers: [process.env.KAFKA_BROKER || 'kafka-service:9092'],
-      },
-      consumer: {
-        groupId: 'auth-consumer-group',
-      },
-    },
+    strategy: kafkaConsumerService,
   });
 
   await app.startAllMicroservices();
