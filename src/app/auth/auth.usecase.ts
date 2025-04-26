@@ -1,34 +1,43 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import {
+  ConflictException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
+import * as bcrypt from 'bcryptjs';
 import { KafkaProducerService } from '../messaging/kafka/kafka-producer.service';
-import { User } from '../users/interfaces/user.interface';
+import { UserRepository } from '../users/user.repository';
+import { LoginReq } from './dto/req/login.dto';
 import { RegisterReq } from './dto/req/register.dto';
+import { LoginRes } from './dto/res/login.dto';
 import { RegisterRes } from './dto/res/register.dto';
 import { IAuthUseCase } from './interfaces/auth.usecase.interface';
-import { LoginReq } from './dto/req/login.dto';
-import { LoginRes } from './dto/res/login.dto';
-import * as bcrypt from 'bcryptjs';
-import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class AuthUseCase implements IAuthUseCase {
   constructor(
-    @InjectRepository(User)
-    private readonly userRepo: Repository<User>,
+    private readonly userRepo: UserRepository,
     private readonly kafkaProducerService: KafkaProducerService,
     private readonly jwtService: JwtService,
   ) {}
 
   async register(dto: RegisterReq): Promise<RegisterRes> {
+    const existingByEmail = await this.userRepo.findByEmail(dto.email);
+    if (existingByEmail) {
+      throw new ConflictException('Email already exists');
+    }
+
+    const existingByUsername = await this.userRepo.findByUsername(dto.username);
+    if (existingByUsername) {
+      throw new ConflictException('Username already exists');
+    }
     const hashedPassword = await bcrypt.hash(dto.password, 10);
 
-    const userEntity = this.userRepo.create({
+    const user = await this.userRepo.create({
       email: dto.email,
       username: dto.username,
       password: hashedPassword,
     });
-    const user = await this.userRepo.save(userEntity);
 
     await this.kafkaProducerService.sendMessage('user.created', {
       id: user.id,
@@ -42,9 +51,7 @@ export class AuthUseCase implements IAuthUseCase {
     };
   }
   async login(dto: LoginReq): Promise<LoginRes> {
-    const user = await this.userRepo.findOne({
-      where: { email: dto.email },
-    });
+    const user = await this.userRepo.findByEmail(dto.email);
 
     if (!user) {
       throw new UnauthorizedException('Invalid email or password');

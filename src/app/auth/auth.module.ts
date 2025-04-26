@@ -1,10 +1,9 @@
 import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
+import { JwtModule } from '@nestjs/jwt';
 import { KafkaProducerService } from '../messaging/kafka/kafka-producer.service';
-import { User } from '../users/interfaces/user.interface';
+import { UserModule } from '../users/user.module';
 import { AuthController } from './auth.controller';
 import { AuthUseCase } from './auth.usecase';
-import { JwtModule } from '@nestjs/jwt';
 
 @Module({
   imports: [
@@ -12,7 +11,7 @@ import { JwtModule } from '@nestjs/jwt';
       secret: process.env.JWT_SECRET,
       signOptions: { expiresIn: '1h' },
     }),
-    TypeOrmModule.forFeature([User]),
+    UserModule,
   ],
   providers: [AuthUseCase, KafkaProducerService],
   controllers: [AuthController],
