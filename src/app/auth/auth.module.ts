@@ -4,6 +4,7 @@ import { KafkaProducerService } from '../../messaging/kafka/kafka-producer.servi
 import { UserModule } from '../users/user.module';
 import { AuthController } from './auth.controller';
 import { AuthUseCase } from './auth.usecase';
+import { TokenModule } from '../tokens/token.module';
 
 @Module({
   imports: [
@@ -12,6 +13,7 @@ import { AuthUseCase } from './auth.usecase';
       signOptions: { expiresIn: '1h' },
     }),
     UserModule,
+    TokenModule,
   ],
   providers: [AuthUseCase, KafkaProducerService],
   controllers: [AuthController],

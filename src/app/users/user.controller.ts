@@ -22,7 +22,6 @@ export class UserController {
     type: GetMeRes,
   })
   async me(@Headers('authorization') authHeader: string): Promise<GetMeRes> {
-    console.log('Authorization Header:', authHeader);
     const getMe = this.userUseCase.me(authHeader);
     return getMe;
   }

@@ -14,6 +14,7 @@ import { RegisterReq } from './dto/req/register.dto';
 import { LoginRes } from './dto/res/login.dto';
 import { RegisterRes } from './dto/res/register.dto';
 import { IAuthUseCase } from './interfaces/auth.usecase.interface';
+import { TokenRepository } from '../tokens/token.repository';
 
 @Injectable()
 export class AuthUseCase implements IAuthUseCase {
@@ -21,6 +22,7 @@ export class AuthUseCase implements IAuthUseCase {
     private readonly userRepo: UserRepository,
     private readonly kafkaProducerService: KafkaProducerService,
     private readonly jwtService: JwtService,
+    private readonly tokenRepo: TokenRepository,
   ) {}
 
   async register(dto: RegisterReq): Promise<RegisterRes> {
@@ -108,7 +110,14 @@ export class AuthUseCase implements IAuthUseCase {
     }
 
     const payload = { sub: user.id, email: user.email };
-    const accessToken = await this.jwtService.signAsync(payload);
+    const accessToken = await this.jwtService.signAsync(payload, {
+      expiresIn: '1h',
+    });
+
+    const decodedToken = await this.jwtService.decode(accessToken);
+    const expiresAt = new Date(decodedToken.exp * 1000);
+
+    await this.tokenRepo.create(accessToken, expiresAt);
 
     return { accessToken };
   }
@@ -134,5 +143,15 @@ export class AuthUseCase implements IAuthUseCase {
     }
 
     await this.userRepo.markEmailAsVerified(user.id!);
+  }
+
+  async logout(token: string): Promise<void> {
+    const tokenInDb = token.split(' ')[1];
+    const existingToken = await this.tokenRepo.findByToken(tokenInDb);
+    if (!existingToken) {
+      throw new UnauthorizedException('Token not found or already logged out.');
+    }
+
+    await this.tokenRepo.remove(tokenInDb);
   }
 }

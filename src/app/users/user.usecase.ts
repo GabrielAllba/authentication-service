@@ -3,32 +3,42 @@ import { JwtService } from '@nestjs/jwt';
 import { UserRepository } from '../users/user.repository';
 import { IUserUseCase } from './interfaces/user.usecase.interface';
 import { GetMeRes } from './dto/res/get-me.dto';
+import { TokenRepository } from '../tokens/token.repository';
 
 @Injectable()
 export class UserUseCase implements IUserUseCase {
   constructor(
     private readonly userRepo: UserRepository,
     private readonly jwtService: JwtService,
+    private readonly tokenRepo: TokenRepository,
   ) {}
 
   async me(authHeader: string): Promise<GetMeRes> {
+    if (!authHeader) {
+      throw new UnauthorizedException('Authorization token is missing');
+    }
+
+    const token = authHeader.split(' ')[1];
+    if (!token) {
+      throw new UnauthorizedException('Invalid authorization token format');
+    }
+
     try {
-      if (!authHeader) {
-        throw new UnauthorizedException('Authorization token is missing');
+      const existingToken = await this.tokenRepo.findByToken(token);
+      if (!existingToken) {
+        throw new UnauthorizedException('Token not found');
       }
 
-      const token = authHeader.split(' ')[1];
-
-      if (!token) {
-        throw new UnauthorizedException('Invalid authorization token format');
+      const currentTime = new Date();
+      if (existingToken.expiresAt < currentTime) {
+        await this.tokenRepo.remove(token);
+        throw new UnauthorizedException('Token has expired');
       }
 
       const decoded = await this.jwtService.verifyAsync(token);
-
       const userId = decoded.sub;
 
       const user = await this.userRepo.findById(userId);
-
       if (!user) {
         throw new UnauthorizedException('User not found');
       }
@@ -40,7 +50,7 @@ export class UserUseCase implements IUserUseCase {
         isEmailVerified: user.isEmailVerified,
       };
     } catch (error) {
-      console.error(error);
+      console.error('JWT verification error:', error);
       throw new UnauthorizedException('Invalid or expired token');
     }
   }

@@ -6,4 +6,6 @@ import { RegisterRes } from '../dto/res/register.dto';
 export interface IAuthUseCase {
   register(data: RegisterReq): Promise<RegisterRes>;
   login(data: LoginReq): Promise<LoginRes>;
+  verifyEmail(token: string): Promise<void>;
+  logout(authHeader: string): Promise<void>;
 }

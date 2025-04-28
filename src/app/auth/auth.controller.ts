@@ -1,5 +1,10 @@
-import { Body, Controller, Get, Post, Query } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Get, Headers, Post, Query } from '@nestjs/common';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { AuthUseCase } from './auth.usecase';
 import { RegisterReq } from './dto/req/register.dto';
 import { RegisterRes } from './dto/res/register.dto';
@@ -54,5 +59,19 @@ export class AuthController {
   ): Promise<{ message: string }> {
     await this.authUseCase.verifyEmail(token);
     return { message: 'Email verified successfully' };
+  }
+
+  @Get('logout')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Logout user (invalidate token client-side)' })
+  @ApiResponse({
+    status: 200,
+    description: 'User successfully logged out',
+  })
+  async logout(
+    @Headers('authorization') authHeader: string,
+  ): Promise<{ message: string }> {
+    await this.authUseCase.logout(authHeader);
+    return { message: 'Successfully logged out' };
   }
 }
