@@ -4,10 +4,12 @@ import { typeOrmConfig } from 'src/config/typeorm.config';
 import { AuthModule } from './app/auth/auth.module';
 import { MessagingModule } from './messaging/messaging.module';
 import { UserModule } from './app/users/user.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
     TypeOrmModule.forRoot(typeOrmConfig),
+    ScheduleModule.forRoot(),
     AuthModule,
     UserModule,
     MessagingModule,

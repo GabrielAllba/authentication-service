@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { LessThan, Repository } from 'typeorm';
 import { Token } from './entity/token.entity';
+import { Cron, CronExpression } from '@nestjs/schedule';
 
 @Injectable()
 export class TokenRepository {
@@ -28,5 +29,12 @@ export class TokenRepository {
   }
   async findByToken(token: string): Promise<Token | null> {
     return this.repository.findOne({ where: { token } });
+  }
+
+  @Cron(CronExpression.EVERY_10_SECONDS)
+  async cleanExpiredTokens() {
+    await this.repository.delete({
+      expiresAt: LessThan(new Date()),
+    });
   }
 }

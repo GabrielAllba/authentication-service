@@ -31,7 +31,6 @@ export class UserUseCase implements IUserUseCase {
 
       const currentTime = new Date();
       if (existingToken.expiresAt < currentTime) {
-        await this.tokenRepo.remove(token);
         throw new UnauthorizedException('Token has expired');
       }
 
