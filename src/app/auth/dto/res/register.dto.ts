@@ -9,4 +9,7 @@ export class RegisterRes {
 
   @ApiProperty()
   public username: string;
+
+  @ApiProperty({ default: 'false' })
+  public isEmailVerified: boolean;
 }

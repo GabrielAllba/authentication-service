@@ -1,4 +1,4 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { AuthUseCase } from './auth.usecase';
 import { RegisterReq } from './dto/req/register.dto';
@@ -37,5 +37,22 @@ export class AuthController {
   async login(@Body() dto: LoginReq): Promise<LoginRes> {
     const result = await this.authUseCase.login(dto);
     return result;
+  }
+
+  @Get('verify-email')
+  @ApiOperation({ summary: 'Verify user email using token' })
+  @ApiResponse({
+    status: 200,
+    description: 'Email successfully verified',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid or expired verification token',
+  })
+  async verifyEmail(
+    @Query('token') token: string,
+  ): Promise<{ message: string }> {
+    await this.authUseCase.verifyEmail(token);
+    return { message: 'Email verified successfully' };
   }
 }

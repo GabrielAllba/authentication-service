@@ -1,10 +1,12 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
+import { v4 as uuidv4 } from 'uuid';
 import { KafkaProducerService } from '../messaging/kafka/kafka-producer.service';
 import { UserRepository } from '../users/user.repository';
 import { LoginReq } from './dto/req/login.dto';
@@ -31,30 +33,44 @@ export class AuthUseCase implements IAuthUseCase {
     if (existingByUsername) {
       throw new ConflictException('Username already exists');
     }
+
     const hashedPassword = await bcrypt.hash(dto.password, 10);
+
+    const verificationToken = uuidv4();
+    const expiresAt = new Date();
+    expiresAt.setHours(expiresAt.getHours() + 24);
 
     const user = await this.userRepo.create({
       email: dto.email,
       username: dto.username,
       password: hashedPassword,
+      isEmailVerified: false,
+      emailVerificationToken: verificationToken,
+      emailVerificationTokenExpiresAt: expiresAt,
     });
 
     await this.kafkaProducerService.sendMessage('user.created', {
-      id: user.id,
       email: user.email,
-      username: user.username,
+      emailVerificationToken: verificationToken,
     });
+
     return {
-      id: user.id,
+      id: user.id!,
       email: user.email,
       username: user.username,
+      isEmailVerified: user.isEmailVerified,
     };
   }
+
   async login(dto: LoginReq): Promise<LoginRes> {
     const user = await this.userRepo.findByEmail(dto.email);
 
     if (!user) {
       throw new UnauthorizedException('Invalid email or password');
+    }
+
+    if (!user.isEmailVerified) {
+      throw new UnauthorizedException('Email not verified yet');
     }
 
     const isPasswordValid = await bcrypt.compare(dto.password, user.password);
@@ -67,5 +83,22 @@ export class AuthUseCase implements IAuthUseCase {
     const accessToken = await this.jwtService.signAsync(payload);
 
     return { accessToken };
+  }
+
+  async verifyEmail(token: string): Promise<void> {
+    const user = await this.userRepo.findByEmailVerificationToken(token);
+
+    if (!user) {
+      throw new BadRequestException('Invalid or expired verification token');
+    }
+
+    if (
+      user.emailVerificationTokenExpiresAt &&
+      user.emailVerificationTokenExpiresAt < new Date()
+    ) {
+      throw new BadRequestException('Verification token has expired');
+    }
+
+    await this.userRepo.markEmailAsVerified(user.id!);
   }
 }

@@ -12,7 +12,7 @@ export class KafkaProducerService implements OnModuleInit, OnModuleDestroy {
 
   constructor() {
     this.kafka = new Kafka({
-      clientId: 'project-hub-account-service',
+      clientId: 'account-service',
       brokers: [process.env.KAFKA_BROKER || 'localhost:9092'],
     });
 

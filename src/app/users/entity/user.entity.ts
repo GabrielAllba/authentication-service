@@ -5,7 +5,7 @@ import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 export class User {
   @ApiProperty()
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id?: string;
 
   @ApiProperty()
   @Column({ unique: true })
@@ -18,4 +18,16 @@ export class User {
   @ApiProperty()
   @Column()
   password: string;
+
+  @ApiProperty({ default: false })
+  @Column({ default: false })
+  isEmailVerified: boolean;
+
+  @ApiProperty({ required: false })
+  @Column({ type: 'varchar', nullable: true })
+  emailVerificationToken: string | null;
+
+  @ApiProperty({ required: false })
+  @Column({ type: 'timestamp', nullable: true })
+  emailVerificationTokenExpiresAt: Date | null;
 }

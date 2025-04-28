@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { User } from './interfaces/user.interface';
+import { User } from './entity/user.entity';
 import { UserRepository } from './user.repository';
 
 @Module({
