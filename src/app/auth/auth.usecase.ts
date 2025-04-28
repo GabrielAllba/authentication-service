@@ -7,7 +7,7 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
-import { KafkaProducerService } from '../messaging/kafka/kafka-producer.service';
+import { KafkaProducerService } from '../../messaging/kafka/kafka-producer.service';
 import { UserRepository } from '../users/user.repository';
 import { LoginReq } from './dto/req/login.dto';
 import { RegisterReq } from './dto/req/register.dto';
