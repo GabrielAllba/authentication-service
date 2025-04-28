@@ -26,12 +26,38 @@ export class AuthUseCase implements IAuthUseCase {
   async register(dto: RegisterReq): Promise<RegisterRes> {
     const existingByEmail = await this.userRepo.findByEmail(dto.email);
     if (existingByEmail) {
-      throw new ConflictException('Email already exists');
-    }
+      if (
+        existingByEmail.emailVerificationTokenExpiresAt &&
+        existingByEmail.emailVerificationTokenExpiresAt < new Date()
+      ) {
+        const verificationToken = uuidv4();
+        const expiresAt = new Date();
+        expiresAt.setHours(expiresAt.getHours() + 24);
 
-    const existingByUsername = await this.userRepo.findByUsername(dto.username);
-    if (existingByUsername) {
-      throw new ConflictException('Username already exists');
+        await this.userRepo.updateVerificationToken(
+          existingByEmail.id!,
+          verificationToken,
+          expiresAt,
+        );
+
+        await this.kafkaProducerService.sendMessage('user.created', {
+          email: existingByEmail.email,
+          emailVerificationToken: verificationToken,
+        });
+
+        return {
+          id: existingByEmail.id!,
+          email: existingByEmail.email,
+          username: existingByEmail.username,
+          isEmailVerified: existingByEmail.isEmailVerified,
+        };
+      }
+
+      if (existingByEmail.isEmailVerified) {
+        throw new ConflictException('Email already verified');
+      }
+
+      throw new ConflictException('Email already exists');
     }
 
     const hashedPassword = await bcrypt.hash(dto.password, 10);
@@ -48,6 +74,8 @@ export class AuthUseCase implements IAuthUseCase {
       emailVerificationToken: verificationToken,
       emailVerificationTokenExpiresAt: expiresAt,
     });
+
+    await this.userRepo.create(user);
 
     await this.kafkaProducerService.sendMessage('user.created', {
       email: user.email,
@@ -92,11 +120,17 @@ export class AuthUseCase implements IAuthUseCase {
       throw new BadRequestException('Invalid or expired verification token');
     }
 
+    if (user.isEmailVerified) {
+      throw new BadRequestException('Email is already verified');
+    }
+
     if (
       user.emailVerificationTokenExpiresAt &&
       user.emailVerificationTokenExpiresAt < new Date()
     ) {
-      throw new BadRequestException('Verification token has expired');
+      throw new BadRequestException(
+        'Verification token has expired. Please register again.',
+      );
     }
 
     await this.userRepo.markEmailAsVerified(user.id!);

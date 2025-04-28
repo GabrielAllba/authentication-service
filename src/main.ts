@@ -8,8 +8,8 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidationPipe());
 
   const config = new DocumentBuilder()
-    .setTitle('Auth Service')
-    .setDescription('Authentication API')
+    .setTitle('Account Service')
+    .setDescription('Account API')
     .setVersion('1.0')
     .build();
 
