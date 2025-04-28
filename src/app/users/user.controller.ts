@@ -1,5 +1,10 @@
 import { Controller, Get, Headers } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { GetMeRes } from './dto/res/get-me.dto';
 import { UserUseCase } from './user.usecase';
 
@@ -9,6 +14,7 @@ export class UserController {
   constructor(private readonly userUseCase: UserUseCase) {}
 
   @Get('me')
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Get user details based on JWT token' })
   @ApiResponse({
     status: 200,
