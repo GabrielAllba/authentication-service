@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
-import { KafkaProducerService } from '../../messaging/kafka/kafka-producer.service';
+import { KafkaModule } from 'src/messaging/kafka/kafka.module';
+import { TokenModule } from '../tokens/token.module';
 import { UserModule } from '../users/user.module';
 import { AuthController } from './auth.controller';
 import { AuthUseCase } from './auth.usecase';
-import { TokenModule } from '../tokens/token.module';
 
 @Module({
   imports: [
@@ -14,8 +14,9 @@ import { TokenModule } from '../tokens/token.module';
     }),
     UserModule,
     TokenModule,
+    KafkaModule,
   ],
-  providers: [AuthUseCase, KafkaProducerService],
+  providers: [AuthUseCase],
   controllers: [AuthController],
 })
 export class AuthModule {}

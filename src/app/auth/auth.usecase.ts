@@ -6,22 +6,22 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
+import { KafkaProducerRepository } from 'src/messaging/kafka/kafka-producer.repository';
 import { v4 as uuidv4 } from 'uuid';
-import { KafkaProducerService } from '../../messaging/kafka/kafka-producer.service';
+import { TokenRepository } from '../tokens/token.repository';
 import { UserRepository } from '../users/user.repository';
 import { LoginReq } from './dto/req/login.dto';
 import { RegisterReq } from './dto/req/register.dto';
 import { LoginRes } from './dto/res/login.dto';
 import { RegisterRes } from './dto/res/register.dto';
 import { IAuthUseCase } from './interfaces/auth.usecase.interface';
-import { TokenRepository } from '../tokens/token.repository';
 
 @Injectable()
 export class AuthUseCase implements IAuthUseCase {
   constructor(
     private readonly userRepo: UserRepository,
-    private readonly kafkaProducerService: KafkaProducerService,
-    private readonly jwtService: JwtService,
+    private readonly kafkaProducerRepo: KafkaProducerRepository,
+    private readonly jwtRepo: JwtService,
     private readonly tokenRepo: TokenRepository,
   ) {}
 
@@ -42,7 +42,7 @@ export class AuthUseCase implements IAuthUseCase {
           expiresAt,
         );
 
-        await this.kafkaProducerService.sendMessage('user.created', {
+        await this.kafkaProducerRepo.sendMessage('user.created', {
           email: existingByEmail.email,
           emailVerificationToken: verificationToken,
         });
@@ -79,7 +79,7 @@ export class AuthUseCase implements IAuthUseCase {
 
     await this.userRepo.create(user);
 
-    await this.kafkaProducerService.sendMessage('user.created', {
+    await this.kafkaProducerRepo.sendMessage('user.created', {
       email: user.email,
       emailVerificationToken: verificationToken,
     });
@@ -110,11 +110,11 @@ export class AuthUseCase implements IAuthUseCase {
     }
 
     const payload = { sub: user.id, email: user.email };
-    const accessToken = await this.jwtService.signAsync(payload, {
+    const accessToken = await this.jwtRepo.signAsync(payload, {
       expiresIn: '1h',
     });
 
-    const decodedToken = await this.jwtService.decode(accessToken);
+    const decodedToken = await this.jwtRepo.decode(accessToken);
     const expiresAt = new Date(decodedToken.exp * 1000);
 
     await this.tokenRepo.create(accessToken, expiresAt);
