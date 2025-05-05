@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
-import { KafkaModule } from 'src/messaging/kafka/kafka.module';
+import { KafkaModule } from 'src/infra/kafka/kafka.module';
 import { TokenModule } from '../tokens/token.module';
 import { UserModule } from '../users/user.module';
 import { AuthController } from './auth.controller';

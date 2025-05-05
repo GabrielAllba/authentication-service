@@ -1,29 +1,25 @@
-import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
+import { MicroserviceOptions, Transport } from '@nestjs/microservices';
+import { join } from 'path';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
-  app.useGlobalPipes(new ValidationPipe());
-
-  const config = new DocumentBuilder()
-    .setTitle('Account Service')
-    .setDescription('Account API')
-    .setVersion('1.0')
-    .addBearerAuth()
-    .build();
-
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api', app, document);
-
-  await app.listen(process.env.PORT || 3000);
-
-  console.log(
-    `🚀 Auth service running on http://localhost:${process.env.PORT || 3000}`,
+  const app = await NestFactory.createMicroservice<MicroserviceOptions>(
+    AppModule,
+    {
+      transport: Transport.GRPC,
+      options: {
+        package: 'projecthubaccount',
+        protoPath: join(
+          __dirname,
+          './infra/grpc/proto/project-hub-account.proto',
+        ),
+        url: '0.0.0.0:50051',
+      },
+    },
   );
-  console.log(
-    `📚 Swagger docs available at http://localhost:${process.env.PORT || 3000}/api`,
-  );
+
+  await app.listen();
+  console.log('✅ gRPC service running on port 50051');
 }
 bootstrap();

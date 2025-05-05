@@ -1,28 +1,15 @@
-import { Controller, Get, Headers } from '@nestjs/common';
-import {
-  ApiBearerAuth,
-  ApiOperation,
-  ApiResponse,
-  ApiTags,
-} from '@nestjs/swagger';
-import { GetMeRes } from './dto/res/get-me.dto';
+import { Controller } from '@nestjs/common';
+import { GrpcMethod } from '@nestjs/microservices';
 import { UserUseCase } from './user.usecase';
+import { GetMeRes } from './dto/res/get-me.dto';
+import { GetMeReq } from './dto/req/get-me.dto';
 
-@ApiTags('user')
-@Controller('user')
+@Controller()
 export class UserController {
   constructor(private readonly userUseCase: UserUseCase) {}
 
-  @Get('me')
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Get user details based on JWT token' })
-  @ApiResponse({
-    status: 200,
-    description: 'Successfully retrieved user details',
-    type: GetMeRes,
-  })
-  async me(@Headers('authorization') authHeader: string): Promise<GetMeRes> {
-    const getMe = this.userUseCase.me(authHeader);
-    return getMe;
+  @GrpcMethod('AuthService', 'GetMe')
+  async me(dto: GetMeReq): Promise<GetMeRes> {
+    return this.userUseCase.me(dto);
   }
 }

@@ -1,77 +1,43 @@
-import { Body, Controller, Get, Headers, Post, Query } from '@nestjs/common';
-import {
-  ApiBearerAuth,
-  ApiOperation,
-  ApiResponse,
-  ApiTags,
-} from '@nestjs/swagger';
+import { Controller } from '@nestjs/common';
+import { GrpcMethod } from '@nestjs/microservices';
 import { AuthUseCase } from './auth.usecase';
-import { RegisterReq } from './dto/req/register.dto';
-import { RegisterRes } from './dto/res/register.dto';
-import { LoginRes } from './dto/res/login.dto';
 import { LoginReq } from './dto/req/login.dto';
+import { LogoutReq } from './dto/req/logout.dto';
+import { RegisterReq } from './dto/req/register.dto';
+import { ValidateTokenReq } from './dto/req/validate-token.dto';
+import { VerifyEmailReq } from './dto/req/verify-email.dto';
+import { LoginRes } from './dto/res/login.dto';
+import { LogoutRes } from './dto/res/logout';
+import { RegisterRes } from './dto/res/register.dto';
+import { ValidateTokenRes } from './dto/res/validate-token.dto';
+import { VerifyEmailRes } from './dto/res/verify-email.dto';
 
-@ApiTags('auth')
-@Controller('auth')
+@Controller()
 export class AuthController {
   constructor(private readonly authUseCase: AuthUseCase) {}
 
-  @Post('register')
-  @ApiOperation({ summary: 'Register a new user' })
-  @ApiResponse({
-    status: 201,
-    description: 'User successfully registered',
-    type: RegisterRes,
-  })
-  async register(@Body() dto: RegisterReq): Promise<RegisterRes> {
-    const user = await this.authUseCase.register(dto);
-    return user;
+  @GrpcMethod('AuthService', 'Register')
+  async register(dto: RegisterReq): Promise<RegisterRes> {
+    return this.authUseCase.register(dto);
   }
 
-  @Post('login')
-  @ApiOperation({ summary: 'Login user' })
-  @ApiResponse({
-    status: 200,
-    description: 'User successfully logged in',
-    type: LoginRes,
-  })
-  @ApiResponse({
-    status: 401,
-    description: 'Invalid email or password',
-  })
-  async login(@Body() dto: LoginReq): Promise<LoginRes> {
-    const result = await this.authUseCase.login(dto);
-    return result;
+  @GrpcMethod('AuthService', 'Login')
+  async login(dto: LoginReq): Promise<LoginRes> {
+    return this.authUseCase.login(dto);
   }
 
-  @Get('verify-email')
-  @ApiOperation({ summary: 'Verify user email using token' })
-  @ApiResponse({
-    status: 200,
-    description: 'Email successfully verified',
-  })
-  @ApiResponse({
-    status: 400,
-    description: 'Invalid or expired verification token',
-  })
-  async verifyEmail(
-    @Query('token') token: string,
-  ): Promise<{ message: string }> {
-    await this.authUseCase.verifyEmail(token);
-    return { message: 'Email verified successfully' };
+  @GrpcMethod('AuthService', 'VerifyEmail')
+  async verifyEmail(dto: VerifyEmailReq): Promise<VerifyEmailRes> {
+    return this.authUseCase.verifyEmail(dto);
   }
 
-  @Get('logout')
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Logout user (invalidate token client-side)' })
-  @ApiResponse({
-    status: 200,
-    description: 'User successfully logged out',
-  })
-  async logout(
-    @Headers('authorization') authHeader: string,
-  ): Promise<{ message: string }> {
-    await this.authUseCase.logout(authHeader);
-    return { message: 'Successfully logged out' };
+  @GrpcMethod('AuthService', 'Logout')
+  async logout(dto: LogoutReq): Promise<LogoutRes> {
+    return this.authUseCase.logout(dto);
+  }
+
+  @GrpcMethod('AuthService', 'ValidateToken')
+  async validateToken(dto: ValidateTokenReq): Promise<ValidateTokenRes> {
+    return this.authUseCase.validateToken(dto);
   }
 }

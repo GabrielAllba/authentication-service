@@ -6,14 +6,20 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
-import { KafkaProducerRepository } from 'src/messaging/kafka/kafka-producer.repository';
+import { KafkaProducerRepository } from 'src/infra/kafka/kafka-producer.repository';
 import { v4 as uuidv4 } from 'uuid';
 import { TokenRepository } from '../tokens/token.repository';
 import { UserRepository } from '../users/user.repository';
 import { LoginReq } from './dto/req/login.dto';
+import { LogoutReq } from './dto/req/logout.dto';
 import { RegisterReq } from './dto/req/register.dto';
+import { ValidateTokenReq } from './dto/req/validate-token.dto';
+import { VerifyEmailReq } from './dto/req/verify-email.dto';
 import { LoginRes } from './dto/res/login.dto';
+import { LogoutRes } from './dto/res/logout';
 import { RegisterRes } from './dto/res/register.dto';
+import { ValidateTokenRes } from './dto/res/validate-token.dto';
+import { VerifyEmailRes } from './dto/res/verify-email.dto';
 import { IAuthUseCase } from './interfaces/auth.usecase.interface';
 
 @Injectable()
@@ -122,8 +128,8 @@ export class AuthUseCase implements IAuthUseCase {
     return { accessToken };
   }
 
-  async verifyEmail(token: string): Promise<void> {
-    const user = await this.userRepo.findByEmailVerificationToken(token);
+  async verifyEmail(dto: VerifyEmailReq): Promise<VerifyEmailRes> {
+    const user = await this.userRepo.findByEmailVerificationToken(dto.token);
 
     if (!user) {
       throw new BadRequestException('Invalid or expired verification token');
@@ -143,15 +149,58 @@ export class AuthUseCase implements IAuthUseCase {
     }
 
     await this.userRepo.markEmailAsVerified(user.id!);
+    return { message: 'Success' };
   }
 
-  async logout(token: string): Promise<void> {
-    const tokenInDb = token.split(' ')[1];
+  async logout(dto: LogoutReq): Promise<LogoutRes> {
+    const tokenInDb = dto.token.split(' ')[1];
     const existingToken = await this.tokenRepo.findByToken(tokenInDb);
     if (!existingToken) {
       throw new UnauthorizedException('Token not found or already logged out.');
     }
 
     await this.tokenRepo.remove(tokenInDb);
+    return { message: 'Successfully logged out!' };
+  }
+
+  async validateToken(dto: ValidateTokenReq): Promise<ValidateTokenRes> {
+    if (!dto.token) {
+      throw new UnauthorizedException('Authorization token is missing');
+    }
+
+    const token = dto.token.split(' ')[1];
+    if (!token) {
+      throw new UnauthorizedException('Invalid authorization token format');
+    }
+
+    try {
+      const existingToken = await this.tokenRepo.findByToken(token);
+      if (!existingToken) {
+        throw new UnauthorizedException('Token not found');
+      }
+
+      const currentTime = new Date();
+      if (existingToken.expiresAt < currentTime) {
+        throw new UnauthorizedException('Token has expired');
+      }
+
+      const decoded = await this.jwtRepo.verifyAsync(token);
+      const userId = decoded.sub;
+
+      const user = await this.userRepo.findById(userId);
+      if (!user) {
+        throw new UnauthorizedException('User not found');
+      }
+
+      return {
+        id: user.id!,
+        email: user.email,
+        username: user.username,
+        isEmailVerified: user.isEmailVerified,
+      };
+    } catch (error) {
+      console.error('JWT verification error:', error);
+      throw new UnauthorizedException('Invalid or expired token');
+    }
   }
 }

@@ -1,4 +1,4 @@
-export class RegisterRes {
+export class ValidateTokenRes {
   id: string;
   email: string;
   username: string;

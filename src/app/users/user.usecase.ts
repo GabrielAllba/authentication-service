@@ -4,6 +4,7 @@ import { UserRepository } from '../users/user.repository';
 import { IUserUseCase } from './interfaces/user.usecase.interface';
 import { GetMeRes } from './dto/res/get-me.dto';
 import { TokenRepository } from '../tokens/token.repository';
+import { GetMeReq } from './dto/req/get-me.dto';
 
 @Injectable()
 export class UserUseCase implements IUserUseCase {
@@ -13,12 +14,12 @@ export class UserUseCase implements IUserUseCase {
     private readonly tokenRepo: TokenRepository,
   ) {}
 
-  async me(authHeader: string): Promise<GetMeRes> {
-    if (!authHeader) {
+  async me(dto: GetMeReq): Promise<GetMeRes> {
+    if (!dto.token) {
       throw new UnauthorizedException('Authorization token is missing');
     }
 
-    const token = authHeader.split(' ')[1];
+    const token = dto.token.split(' ')[1];
     if (!token) {
       throw new UnauthorizedException('Invalid authorization token format');
     }
