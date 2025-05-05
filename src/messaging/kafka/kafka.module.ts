@@ -12,9 +12,6 @@ import { KafkaProducerRepository } from './kafka-producer.repository';
             clientId: 'CLIENT_PROJECT_HUB_ACCOUNT_SERVICE',
             brokers: [process.env.KAFKA_BROKER || 'localhost:9092'],
           },
-          consumer: {
-            groupId: 'CONSUMER_PROJECT_HUB_ACCOUNT_SERVICE',
-          },
         },
       },
     ]),
