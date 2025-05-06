@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
-import { KafkaProducerRepository } from 'src/messaging/kafka/kafka-producer.repository';
+import { KafkaProducerRepository } from 'src/infra/kafka/kafka-producer.repository';
 import { v4 as uuidv4 } from 'uuid';
 import { TokenRepository } from '../tokens/token.repository';
 import { UserRepository } from '../users/user.repository';
