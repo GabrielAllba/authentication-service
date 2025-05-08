@@ -14,12 +14,11 @@ import { LoginReq } from './dto/req/login.dto';
 import { RegisterReq } from './dto/req/register.dto';
 import { LoginRes } from './dto/res/login.dto';
 import { RegisterRes } from './dto/res/register.dto';
-import { IAuthUseCase } from './interfaces/auth.usecase.interface';
 import { ValidateTokenReq } from './dto/req/validate-token';
 import { ValidateTokenRes } from './dto/res/validate-token';
 
 @Injectable()
-export class AuthUseCase implements IAuthUseCase {
+export class AuthUseCase {
   constructor(
     private readonly userRepo: UserRepository,
     private readonly kafkaProducerRepo: KafkaProducerRepository,
