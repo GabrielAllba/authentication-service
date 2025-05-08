@@ -15,6 +15,8 @@ import { RegisterReq } from './dto/req/register.dto';
 import { LoginRes } from './dto/res/login.dto';
 import { RegisterRes } from './dto/res/register.dto';
 import { IAuthUseCase } from './interfaces/auth.usecase.interface';
+import { ValidateTokenReq } from './dto/req/validate-token';
+import { ValidateTokenRes } from './dto/res/validate-token';
 
 @Injectable()
 export class AuthUseCase implements IAuthUseCase {
@@ -153,5 +155,45 @@ export class AuthUseCase implements IAuthUseCase {
     }
 
     await this.tokenRepo.remove(tokenInDb);
+  }
+
+  async validateToken(dto: ValidateTokenReq): Promise<ValidateTokenRes> {
+    if (!dto.token) {
+      throw new UnauthorizedException('Authorization token is missing');
+    }
+
+    const token = dto.token.split(' ')[1];
+    if (!token) {
+      throw new UnauthorizedException('Invalid authorization token format');
+    }
+
+    try {
+      const existingToken = await this.tokenRepo.findByToken(token);
+      if (!existingToken) {
+        throw new UnauthorizedException('Token not found');
+      }
+
+      const currentTime = new Date();
+      if (existingToken.expiresAt < currentTime) {
+        throw new UnauthorizedException('Token has expired');
+      }
+
+      const decoded = await this.jwtRepo.verifyAsync(token);
+      const userId = decoded.sub;
+
+      const user = await this.userRepo.findById(userId);
+      if (!user) {
+        throw new UnauthorizedException('User not found');
+      }
+      return {
+        id: user.id!,
+        email: user.email,
+        username: user.username,
+        isEmailVerified: user.isEmailVerified,
+      };
+    } catch (error) {
+      console.error('JWT verification error:', error);
+      throw new UnauthorizedException('Invalid or expired token');
+    }
   }
 }

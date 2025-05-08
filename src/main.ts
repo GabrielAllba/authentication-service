@@ -1,9 +1,8 @@
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
-import { MicroserviceOptions, Transport } from '@nestjs/microservices';
-import { join } from 'path';
 
 async function bootstrap() {
   const grpcApp = await NestFactory.createMicroservice<MicroserviceOptions>(
@@ -12,14 +11,8 @@ async function bootstrap() {
       transport: Transport.GRPC,
       options: {
         url: `0.0.0.0:${process.env.PROJECT_HUB_ACCOUNT_SERVICE_GRPC_PORT}`,
-        package: 'projecthubaccountservice',
-        protoPath: join(
-          __dirname,
-          '..',
-          '..',
-          'proto-shared',
-          'project-hub-account-service.proto',
-        ),
+        package: 'projecthubaccount',
+        protoPath: './contract/project-hub-account-service.proto',
       },
     },
   );
@@ -28,7 +21,7 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidationPipe());
 
   const config = new DocumentBuilder()
-    .setTitle('Project Hub Account Service')
+    .setTitle('Project Hub Account Service API')
     .setDescription('Account API')
     .setVersion('1.0')
     .addBearerAuth()
@@ -36,6 +29,10 @@ async function bootstrap() {
 
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
+  await grpcApp.listen();
+  console.log(
+    `✅ Project Hub Account Service gRPC service running on port ${process.env.PROJECT_HUB_ACCOUNT_SERVICE_GRPC_PORT || 50051}`,
+  );
 
   await app.listen(process.env.PORT || 3000);
   console.log(
@@ -43,11 +40,6 @@ async function bootstrap() {
   );
   console.log(
     `📚 Swagger docs available at http://localhost:${process.env.PORT || 3000}/api`,
-  );
-
-  await grpcApp.listen();
-  console.log(
-    `✅ Project Hub Account Service gRPC service running on port ${process.env.PROJECT_HUB_ACCOUNT_SERVICE_GRPC_PORT || 50051}`,
   );
 }
 bootstrap();

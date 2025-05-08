@@ -5,6 +5,7 @@ import { TokenModule } from '../tokens/token.module';
 import { UserModule } from '../users/user.module';
 import { AuthController } from './auth.controller';
 import { AuthUseCase } from './auth.usecase';
+import { GrpcController } from './grpc.controller';
 
 @Module({
   imports: [
@@ -17,6 +18,6 @@ import { AuthUseCase } from './auth.usecase';
     KafkaModule,
   ],
   providers: [AuthUseCase],
-  controllers: [AuthController],
+  controllers: [AuthController, GrpcController],
 })
 export class AuthModule {}

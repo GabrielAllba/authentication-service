@@ -12,7 +12,6 @@ export class KafkaProducerRepository implements OnModuleInit {
   async sendMessage(topic: string, message: any) {
     try {
       await this.client.emit(topic, message).toPromise();
-      console.log(`✅ Sent message to topic [${topic}]`);
     } catch (error) {
       console.error('❌ Error sending Kafka message:', error);
       throw error;
