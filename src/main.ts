@@ -3,6 +3,8 @@ import { NestFactory } from '@nestjs/core';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
+import { BaseResponseInterceptor } from './interceptor/response-mapping.interceptor';
+import { BaseExceptionsFilter } from './filter/base-exception.filter';
 
 async function bootstrap() {
   const grpcApp = await NestFactory.createMicroservice<MicroserviceOptions>(
@@ -19,6 +21,8 @@ async function bootstrap() {
 
   const app = await NestFactory.create(AppModule);
   app.useGlobalPipes(new ValidationPipe());
+  app.useGlobalFilters(new BaseExceptionsFilter());
+  app.useGlobalInterceptors(new BaseResponseInterceptor());
 
   const config = new DocumentBuilder()
     .setTitle('Project Hub Account Service API')

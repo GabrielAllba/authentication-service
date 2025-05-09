@@ -19,5 +19,6 @@ import { GrpcController } from './grpc.controller';
   ],
   providers: [AuthUseCase],
   controllers: [AuthController, GrpcController],
+  exports: [AuthUseCase],
 })
 export class AuthModule {}

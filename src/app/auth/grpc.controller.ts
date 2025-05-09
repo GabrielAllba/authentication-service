@@ -10,7 +10,6 @@ export class GrpcController {
 
   @GrpcMethod('ProjectHubAccountService', 'ValidateToken')
   async validateToken(dto: ValidateTokenReq): Promise<ValidateTokenRes> {
-    console.log('[SERVER] gRPC ValidateToken called with token:', dto.token);
     return await this.authUseCase.validateToken(dto);
   }
 }

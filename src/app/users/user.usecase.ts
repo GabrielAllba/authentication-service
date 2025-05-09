@@ -1,12 +1,11 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { UserRepository } from '../users/user.repository';
-import { IUserUseCase } from './interfaces/user.usecase.interface';
-import { GetMeRes } from './dto/res/get-me.dto';
 import { TokenRepository } from '../tokens/token.repository';
+import { UserRepository } from '../users/user.repository';
+import { GetMeRes } from './dto/res/get-me.dto';
 
 @Injectable()
-export class UserUseCase implements IUserUseCase {
+export class UserUseCase {
   constructor(
     private readonly userRepo: UserRepository,
     private readonly jwtService: JwtService,
@@ -14,10 +13,6 @@ export class UserUseCase implements IUserUseCase {
   ) {}
 
   async me(authHeader: string): Promise<GetMeRes> {
-    if (!authHeader) {
-      throw new UnauthorizedException('Authorization token is missing');
-    }
-
     const token = authHeader.split(' ')[1];
     if (!token) {
       throw new UnauthorizedException('Invalid authorization token format');

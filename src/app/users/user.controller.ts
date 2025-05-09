@@ -15,7 +15,7 @@ export class UserController {
 
   @Get('me')
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Get user details based on JWT token' })
+  @ApiOperation({ summary: 'Get current logged in user' })
   @ApiResponse({
     status: 200,
     description: 'Successfully retrieved user details',
