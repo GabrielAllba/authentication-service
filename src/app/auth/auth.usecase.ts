@@ -12,9 +12,9 @@ import { TokenRepository } from '../tokens/token.repository';
 import { UserRepository } from '../users/user.repository';
 import { LoginReq } from './dto/req/login.dto';
 import { RegisterReq } from './dto/req/register.dto';
+import { ValidateTokenReq } from './dto/req/validate-token';
 import { LoginRes } from './dto/res/login.dto';
 import { RegisterRes } from './dto/res/register.dto';
-import { ValidateTokenReq } from './dto/req/validate-token';
 import { ValidateTokenRes } from './dto/res/validate-token';
 
 @Injectable()
@@ -28,6 +28,8 @@ export class AuthUseCase {
 
   async register(dto: RegisterReq): Promise<RegisterRes> {
     const existingByEmail = await this.userRepo.findByEmail(dto.email);
+    const existingByUsername = await this.userRepo.findByUsername(dto.username);
+
     if (existingByEmail) {
       if (
         existingByEmail.emailVerificationTokenExpiresAt &&
@@ -57,10 +59,14 @@ export class AuthUseCase {
       }
 
       if (existingByEmail.isEmailVerified) {
-        throw new ConflictException('Email already verified');
+        throw new ConflictException('Email already used & verified');
       }
 
       throw new ConflictException('Email already exists');
+    }
+
+    if (existingByUsername) {
+      throw new ConflictException('Username already used');
     }
 
     const hashedPassword = await bcrypt.hash(dto.password, 10);
