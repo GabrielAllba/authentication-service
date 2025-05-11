@@ -8,14 +8,14 @@ import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
 import { KafkaProducerRepository } from 'src/infra/kafka/kafka-producer.repository';
 import { v4 as uuidv4 } from 'uuid';
-import { TokenRepository } from '../tokens/token.repository';
-import { UserRepository } from '../users/user.repository';
-import { LoginReq } from './dto/req/login.dto';
-import { RegisterReq } from './dto/req/register.dto';
-import { ValidateTokenReq } from './dto/req/validate-token';
-import { LoginRes } from './dto/res/login.dto';
-import { RegisterRes } from './dto/res/register.dto';
-import { ValidateTokenRes } from './dto/res/validate-token';
+import { TokenRepository } from '../repository/token.repository';
+import { UserRepository } from '../repository/user.repository';
+import { LoginReq } from '../dtos/req/login.dto';
+import { RegisterReq } from '../dtos/req/register.dto';
+import { ValidateTokenReq } from '../dtos/req/validate-token';
+import { LoginRes } from '../dtos/res/login.dto';
+import { RegisterRes } from '../dtos/res/register.dto';
+import { ValidateTokenRes } from '../dtos/res/validate-token';
 
 @Injectable()
 export class AuthUseCase {
@@ -191,7 +191,7 @@ export class AuthUseCase {
         throw new UnauthorizedException('User not found');
       }
       return {
-        id: user.id!,
+        userId: user.id!,
         email: user.email,
         username: user.username,
         isEmailVerified: user.isEmailVerified,

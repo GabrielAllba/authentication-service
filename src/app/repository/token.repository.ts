@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { LessThan, Repository } from 'typeorm';
-import { Token } from './entity/token.entity';
+import { Token } from '../entity/token.entity';
 import { Cron, CronExpression } from '@nestjs/schedule';
 
 @Injectable()

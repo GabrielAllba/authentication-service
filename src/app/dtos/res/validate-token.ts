@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class ValidateTokenRes {
   @ApiProperty()
-  id: string;
+  userId: string;
 
   @ApiProperty()
   email: string;

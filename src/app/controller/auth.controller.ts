@@ -5,11 +5,12 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { AuthUseCase } from './auth.usecase';
-import { LoginReq } from './dto/req/login.dto';
-import { RegisterReq } from './dto/req/register.dto';
-import { LoginRes } from './dto/res/login.dto';
-import { RegisterRes } from './dto/res/register.dto';
+
+import { LoginReq } from '../dtos/req/login.dto';
+import { RegisterReq } from '../dtos/req/register.dto';
+import { LoginRes } from '../dtos/res/login.dto';
+import { RegisterRes } from '../dtos/res/register.dto';
+import { AuthUseCase } from '../usecase/auth.usecase';
 
 @ApiTags('auth')
 @Controller('auth')

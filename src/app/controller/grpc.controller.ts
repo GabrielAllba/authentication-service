@@ -1,8 +1,8 @@
 import { Controller } from '@nestjs/common';
 import { GrpcMethod } from '@nestjs/microservices';
-import { AuthUseCase } from './auth.usecase';
-import { ValidateTokenReq } from './dto/req/validate-token';
-import { ValidateTokenRes } from './dto/res/validate-token';
+import { ValidateTokenReq } from '../dtos/req/validate-token';
+import { ValidateTokenRes } from '../dtos/res/validate-token';
+import { AuthUseCase } from '../usecase/auth.usecase';
 
 @Controller()
 export class GrpcController {
