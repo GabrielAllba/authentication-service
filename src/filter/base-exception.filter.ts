@@ -3,6 +3,7 @@ import {
   Catch,
   ArgumentsHost,
   HttpException,
+  BadRequestException,
   HttpStatus,
 } from '@nestjs/common';
 import { Response } from 'express';
@@ -12,18 +13,30 @@ import { BaseResponse } from '../interceptor/response-mapping.interceptor';
 export class BaseExceptionsFilter implements ExceptionFilter {
   catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
-    const response = ctx.getResponse<Response>();
+    const res = ctx.getResponse<Response>();
 
     let status = HttpStatus.INTERNAL_SERVER_ERROR;
     let message = 'Internal server error';
 
-    if (exception instanceof HttpException) {
+    if (
+      exception instanceof BadRequestException ||
+      exception instanceof HttpException
+    ) {
       status = exception.getStatus();
-      const responseBody = exception.getResponse();
-      message =
-        typeof responseBody === 'string'
-          ? responseBody
-          : (responseBody as any).message || message;
+      const response = exception.getResponse();
+
+      if (typeof response === 'string') {
+        message = response;
+      } else if (
+        typeof response === 'object' &&
+        response !== null &&
+        'message' in response
+      ) {
+        const msg = (response as any).message;
+        message = Array.isArray(msg) ? msg.join('; ') : msg;
+      }
+    } else if (exception instanceof Error) {
+      message = exception.message;
     }
 
     const errorResponse: BaseResponse<null> = {
@@ -32,6 +45,6 @@ export class BaseExceptionsFilter implements ExceptionFilter {
       data: null,
     };
 
-    response.status(status).json(errorResponse);
+    res.status(status).json(errorResponse);
   }
 }

@@ -1,5 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsString, MinLength } from 'class-validator';
+import {
+  IsEmail,
+  IsNotEmpty,
+  IsString,
+  Matches,
+  MinLength,
+} from 'class-validator';
 
 export class RegisterReq {
   @ApiProperty()
@@ -13,5 +19,7 @@ export class RegisterReq {
 
   @ApiProperty()
   @IsString()
+  @IsNotEmpty({ message: 'Username must not be empty or whitespace only' })
+  @Matches(/\S/, { message: 'Username must not be blank or only spaces' })
   username: string;
 }
