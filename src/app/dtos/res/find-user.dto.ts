@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-export class GetMeRes {
+export class FindUserRes {
   @ApiProperty()
   public id: string;
 

@@ -16,6 +16,8 @@ import { ValidateTokenReq } from '../dtos/req/validate-token';
 import { LoginRes } from '../dtos/res/login.dto';
 import { RegisterRes } from '../dtos/res/register.dto';
 import { ValidateTokenRes } from '../dtos/res/validate-token';
+import { FindUserReq } from '../dtos/req/find-user.dto';
+import { FindUserRes } from '../dtos/res/find-user.dto';
 
 @Injectable()
 export class AuthUseCase {
@@ -153,13 +155,23 @@ export class AuthUseCase {
   }
 
   async logout(token: string): Promise<void> {
-    const tokenInDb = token.split(' ')[1];
-    const existingToken = await this.tokenRepo.findByToken(tokenInDb);
-    if (!existingToken) {
-      throw new UnauthorizedException('Token not found or already logged out.');
+    try {
+      const tokenInDb = token.split(' ')[1];
+      if (!tokenInDb) {
+        throw new UnauthorizedException('Invalid authorization token format');
+      }
+      const existingToken = await this.tokenRepo.findByToken(tokenInDb);
+      if (!existingToken) {
+        throw new UnauthorizedException(
+          'Token not found or already logged out.',
+        );
+      }
+      await this.tokenRepo.remove(tokenInDb);
+    } catch (error) {
+      throw new UnauthorizedException(
+        'Logout failed due to an unexpected error: ' + error,
+      );
     }
-
-    await this.tokenRepo.remove(tokenInDb);
   }
 
   async validateToken(dto: ValidateTokenReq): Promise<ValidateTokenRes> {
@@ -197,8 +209,25 @@ export class AuthUseCase {
         isEmailVerified: user.isEmailVerified,
       };
     } catch (error) {
-      console.error('JWT verification error:', error);
-      throw new UnauthorizedException('Invalid or expired token');
+      throw new UnauthorizedException('Invalid or expired token' + error);
+    }
+  }
+
+  async findUser(dto: FindUserReq): Promise<FindUserRes> {
+    try {
+      const user = await this.userRepo.findById(dto.id);
+      if (!user) {
+        throw new UnauthorizedException('User not found');
+      }
+      return {
+        id: user.id!,
+        email: user.email,
+        username: user.username,
+        isEmailVerified: user.isEmailVerified,
+      };
+    } catch (error) {
+      console.error(error);
+      throw new UnauthorizedException('Invalid or expired token' + error);
     }
   }
 }
