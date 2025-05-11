@@ -26,7 +26,7 @@ async function bootstrap() {
   app.useGlobalInterceptors(new BaseResponseInterceptor());
 
   const config = new DocumentBuilder()
-    .setTitle('Project Hub Account Service API')
+    .setTitle('Authentication Service API')
     .setDescription('Account API')
     .setVersion('1.0')
     .addBearerAuth()
@@ -36,12 +36,12 @@ async function bootstrap() {
   SwaggerModule.setup('api', app, document);
   await grpcApp.listen();
   console.log(
-    `✅ Project Hub Account Service gRPC service running on port ${process.env.PROJECT_HUB_ACCOUNT_SERVICE_GRPC_PORT || 50051}`,
+    `✅ Authentication Service gRPC service running on port ${process.env.PROJECT_HUB_ACCOUNT_SERVICE_GRPC_PORT || 50051}`,
   );
 
   await app.listen(process.env.PORT || 3000);
   console.log(
-    `🚀Project Hub Account service running on http://localhost:${process.env.PORT || 3000}`,
+    `🚀Authentication service running on http://localhost:${process.env.PORT || 3000}`,
   );
   console.log(
     `📚 Swagger docs available at http://localhost:${process.env.PORT || 3000}/api`,
