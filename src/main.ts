@@ -13,8 +13,8 @@ async function bootstrap() {
       transport: Transport.GRPC,
       options: {
         url: `0.0.0.0:${process.env.PROJECT_HUB_ACCOUNT_SERVICE_GRPC_PORT}`,
-        package: 'projecthubaccount',
-        protoPath: './contract/project-hub-account-service.proto',
+        package: 'authenticationservice',
+        protoPath: './contract/authentication-service.proto',
       },
     },
   );

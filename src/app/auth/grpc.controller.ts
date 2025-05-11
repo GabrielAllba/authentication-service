@@ -8,7 +8,7 @@ import { ValidateTokenRes } from './dto/res/validate-token';
 export class GrpcController {
   constructor(private readonly authUseCase: AuthUseCase) {}
 
-  @GrpcMethod('ProjectHubAccountService', 'ValidateToken')
+  @GrpcMethod('AuthenticationService', 'ValidateToken')
   async validateToken(dto: ValidateTokenReq): Promise<ValidateTokenRes> {
     return await this.authUseCase.validateToken(dto);
   }
