@@ -12,6 +12,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Needed to create and push tags
 
       - name: Set up Git
         run: |
@@ -23,6 +25,7 @@ jobs:
           TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
         run: |
           VERSION="v$(date +%Y.%m.%d.%H%M%S)"
+          echo "Generated tag: $VERSION"
           git tag $VERSION
           git remote set-url origin https://x-access-token:${TOKEN}@github.com/${{ github.repository }}
           git push origin $VERSION
