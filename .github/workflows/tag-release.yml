@@ -27,5 +27,5 @@ jobs:
           VERSION="v$(date +%Y.%m.%d.%H%M%S)"
           echo "Generated tag: $VERSION"
           git tag $VERSION
-          git remote set-url origin https://x-access-token:${GH_PAT}@github.com/${{ github.repository }}
+          git remote set-url origin https://x-access-token:$GH_PAT@github.com/${{ github.repository }}
           git push origin $VERSION
