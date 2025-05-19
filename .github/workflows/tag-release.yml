@@ -20,12 +20,38 @@ jobs:
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
 
-      - name: Create and push tag
+      - name: Create and push versioned tag
         env:
           GH_PAT: ${{ secrets.GH_PAT }}
         run: |
-          VERSION="v$(date +%Y.%m.%d.%H%M%S)"
-          echo "Generated tag: $VERSION"
+          git fetch --tags
+
+          LAST_TAG=$(git tag --sort=-creatordate | head -n 1)
+          echo "Last tag: $LAST_TAG"
+
+          if [[ -z "$LAST_TAG" ]]; then
+            VERSION="v1.0.0"
+          else
+            IFS='.' read -r MAJOR MINOR PATCH <<< "${LAST_TAG#v}"
+
+            PATCH=$((PATCH + 1))
+            if [ "$PATCH" -gt 10 ]; then
+              PATCH=0
+              MINOR=$((MINOR + 1))
+            fi
+
+            if [ "$MINOR" -gt 5 ]; then
+              MINOR=0
+              MAJOR=$((MAJOR + 1))
+            fi
+
+            VERSION="v$MAJOR.$MINOR.$PATCH"
+          fi
+
+          echo "Generated version: $VERSION"
           git tag $VERSION
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
           git remote set-url origin https://x-access-token:$GH_PAT@github.com/${{ github.repository }}
           git push origin $VERSION
+
