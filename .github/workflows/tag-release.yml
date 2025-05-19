@@ -10,22 +10,22 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout repository with full history
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0  # Needed to create and push tags
+          fetch-depth: 0
 
       - name: Set up Git
         run: |
-          git config user.name "${{ github.actor }}"
-          git config user.email "${{ github.actor }}@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
 
       - name: Create and Push Tag
         env:
-          TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+          GH_PAT: ${{ secrets.GH_PAT }}
         run: |
           VERSION="v$(date +%Y.%m.%d.%H%M%S)"
           echo "Generated tag: $VERSION"
           git tag $VERSION
-          git remote set-url origin https://x-access-token:${TOKEN}@github.com/${{ github.repository }}
+          git remote set-url origin https://x-access-token:${GH_PAT}@github.com/${{ github.repository }}
           git push origin $VERSION
