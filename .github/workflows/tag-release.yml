@@ -18,8 +18,11 @@ jobs:
           git config user.name "${{ github.actor }}"
           git config user.email "${{ github.actor }}@users.noreply.github.com"
 
-      - name: Create Release Tag
+      - name: Create and Push Tag
+        env:
+          TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
         run: |
-          VERSION="v$(date +%Y.%m.%d.%H%M%S)" # You can change this to use semver if desired
+          VERSION="v$(date +%Y.%m.%d.%H%M%S)"
           git tag $VERSION
+          git remote set-url origin https://x-access-token:${TOKEN}@github.com/${{ github.repository }}
           git push origin $VERSION
