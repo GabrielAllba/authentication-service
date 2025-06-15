@@ -50,4 +50,23 @@ export class UserRepository {
       emailVerificationTokenExpiresAt: null,
     });
   }
+
+  async findByEmailOrUsernameLike(
+    email?: string,
+    username?: string,
+  ): Promise<User[]> {
+    const query = this.repository.createQueryBuilder('user');
+
+    if (email) {
+      query.orWhere('user.email ILIKE :email', { email: `%${email}%` });
+    }
+
+    if (username) {
+      query.orWhere('user.username ILIKE :username', {
+        username: `%${username}%`,
+      });
+    }
+
+    return await query.getMany();
+  }
 }

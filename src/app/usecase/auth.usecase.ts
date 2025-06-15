@@ -230,4 +230,15 @@ export class AuthUseCase {
       throw new UnauthorizedException('Invalid or expired token' + error);
     }
   }
+
+  async searchUsers(query: string): Promise<FindUserRes[]> {
+    const users = await this.userRepo.findByEmailOrUsernameLike(query, query);
+
+    return users.map((user) => ({
+      id: user.id!,
+      email: user.email,
+      username: user.username,
+      isEmailVerified: user.isEmailVerified,
+    }));
+  }
 }
