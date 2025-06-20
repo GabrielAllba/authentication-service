@@ -10,6 +10,9 @@ export class RegisterRes {
   @ApiProperty()
   public username: string;
 
+  @ApiProperty()
+  public isUserFirstTime: boolean;
+
   @ApiProperty({ default: 'false' })
   public isEmailVerified: boolean;
 }

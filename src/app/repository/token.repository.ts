@@ -31,7 +31,7 @@ export class TokenRepository {
     return this.repository.findOne({ where: { token } });
   }
 
-  @Cron(CronExpression.EVERY_10_SECONDS)
+  @Cron(CronExpression.EVERY_12_HOURS)
   async cleanExpiredTokens() {
     await this.repository.delete({
       expiresAt: LessThan(new Date()),

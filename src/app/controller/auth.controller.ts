@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Headers, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Headers,
+  Post,
+  Put,
+  Query,
+} from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiOperation,
@@ -14,6 +22,7 @@ import { FindUserRes } from '../dtos/res/find-user.dto';
 import { LoginRes } from '../dtos/res/login.dto';
 import { RegisterRes } from '../dtos/res/register.dto';
 import { AuthUseCase } from '../usecase/auth.usecase';
+import { ResendVerificationReq } from '../dtos/req/resend-verification.dto';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -93,6 +102,26 @@ export class AuthController {
     return { message: 'Success' };
   }
 
+  @Put('not-first-user')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Update user to be not a first user' })
+  @ApiResponse({
+    status: 200,
+    description: 'User updated to be not a first user',
+  })
+  // Changed method name to follow NestJS convention and removed unused @Body() dto
+  async updateNotFirstUser(
+    @Headers('authorization') authHeader: string,
+  ): Promise<{ message: string }> {
+    // Validate token to get the user ID
+    const validatedUser = await this.authUseCase.validateToken({
+      token: authHeader,
+    });
+    // Call the useCase method to update the flag
+    await this.authUseCase.updateNotFirstUser(validatedUser.userId);
+    return { message: 'Success' };
+  }
+
   @Get('me')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get logged in user' })
@@ -128,5 +157,26 @@ export class AuthController {
   })
   async searchUsers(@Query('query') query: string): Promise<FindUserRes[]> {
     return await this.authUseCase.searchUsers(query);
+  }
+
+  @Post('resend-verification')
+  @ApiOperation({ summary: 'Resend verification email for unverified user' })
+  @ApiResponse({
+    status: 200,
+    description: 'Verification email resent',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'User not found',
+  })
+  @ApiResponse({
+    status: 409,
+    description: 'Email already verified',
+  })
+  async resendVerification(
+    @Body() dto: ResendVerificationReq,
+  ): Promise<{ message: string }> {
+    await this.authUseCase.resendVerificationEmail(dto.email);
+    return { message: 'Verification email has been resent' };
   }
 }

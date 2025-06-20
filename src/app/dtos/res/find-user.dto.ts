@@ -12,4 +12,7 @@ export class FindUserRes {
 
   @ApiProperty({ default: 'false' })
   public isEmailVerified: boolean;
+
+  @ApiProperty({ default: 'false' })
+  public isUserFirstTime: boolean;
 }

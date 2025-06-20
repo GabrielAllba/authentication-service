@@ -23,6 +23,10 @@ export class User {
   @Column({ default: false })
   isEmailVerified: boolean;
 
+  @ApiProperty({ default: true })
+  @Column({ default: true })
+  isUserFirstTime: boolean;
+
   @ApiProperty({ required: false })
   @Column({ type: 'varchar', nullable: true })
   emailVerificationToken: string | null;

@@ -69,4 +69,13 @@ export class UserRepository {
 
     return await query.getMany();
   }
+
+  async updateIsUserFirstTimeStatus(
+    id: string,
+    status: boolean,
+  ): Promise<void> {
+    await this.repository.update(id, {
+      isUserFirstTime: status,
+    });
+  }
 }
