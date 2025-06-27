@@ -179,4 +179,21 @@ export class AuthController {
     await this.authUseCase.resendVerificationEmail(dto.email);
     return { message: 'Verification email has been resent' };
   }
+
+  @Get('find-by-email')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Find user by email' })
+  @ApiQuery({ name: 'email', type: String })
+  @ApiResponse({
+    status: 200,
+    description: 'User found by email',
+    type: FindUserRes,
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'User not found',
+  })
+  async findUserByEmail(@Query('email') email: string): Promise<FindUserRes> {
+    return await this.authUseCase.findUserByEmail(email);
+  }
 }

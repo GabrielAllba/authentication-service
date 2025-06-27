@@ -312,4 +312,19 @@ export class AuthUseCase {
       await this.userRepo.updateIsUserFirstTimeStatus(user.id!, false);
     }
   }
+
+  async findUserByEmail(email: string): Promise<FindUserRes> {
+    const user = await this.userRepo.findByEmail(email);
+    if (!user) {
+      throw new NotFoundException(`User with email ${email} not found`);
+    }
+
+    return {
+      id: user.id!,
+      email: user.email,
+      username: user.username,
+      isEmailVerified: user.isEmailVerified,
+      isUserFirstTime: user.isUserFirstTime,
+    };
+  }
 }
