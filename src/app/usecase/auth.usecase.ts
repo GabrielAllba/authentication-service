@@ -2,12 +2,12 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
-import { KafkaProducerRepository } from 'src/infra/kafka/kafka-producer.repository';
 import { v4 as uuidv4 } from 'uuid';
 import { FindUserReq } from '../dtos/req/find-user.dto';
 import { LoginReq } from '../dtos/req/login.dto';
@@ -19,14 +19,15 @@ import { RegisterRes } from '../dtos/res/register.dto';
 import { ValidateTokenRes } from '../dtos/res/validate-token';
 import { TokenRepository } from '../repository/token.repository';
 import { UserRepository } from '../repository/user.repository';
+import { EmailUseCase } from './email.usecase';
 
 @Injectable()
 export class AuthUseCase {
   constructor(
     private readonly userRepo: UserRepository,
-    private readonly kafkaProducerRepo: KafkaProducerRepository,
     private readonly jwtRepo: JwtService,
     private readonly tokenRepo: TokenRepository,
+    private readonly emailUseCase: EmailUseCase,
   ) {}
 
   async register(dto: RegisterReq): Promise<RegisterRes> {
@@ -48,10 +49,16 @@ export class AuthUseCase {
           expiresAt,
         );
 
-        await this.kafkaProducerRepo.sendMessage('user.created', {
-          email: existingByEmail.email,
-          emailVerificationToken: verificationToken,
-        });
+        try {
+          await this.emailUseCase.sendVerificationEmail(
+            existingByEmail.email,
+            verificationToken,
+          );
+        } catch {
+          throw new InternalServerErrorException(
+            'Account found but failed to send verification email. Please try again later.',
+          );
+        }
 
         return {
           id: existingByEmail.id!,
@@ -74,27 +81,37 @@ export class AuthUseCase {
     }
 
     const hashedPassword = await bcrypt.hash(dto.password, 10);
-
     const verificationToken = uuidv4();
     const expiresAt = new Date();
     expiresAt.setHours(expiresAt.getHours() + 24);
 
-    const user = await this.userRepo.create({
-      email: dto.email,
-      username: dto.username,
-      password: hashedPassword,
-      isEmailVerified: false,
-      emailVerificationToken: verificationToken,
-      emailVerificationTokenExpiresAt: expiresAt,
-      isUserFirstTime: true,
-    });
+    let user;
+    try {
+      user = await this.userRepo.create({
+        email: dto.email,
+        username: dto.username,
+        password: hashedPassword,
+        isEmailVerified: false,
+        emailVerificationToken: verificationToken,
+        emailVerificationTokenExpiresAt: expiresAt,
+        isUserFirstTime: true,
+      });
+    } catch {
+      throw new InternalServerErrorException(
+        'Failed to create user account. Please try again.',
+      );
+    }
 
-    await this.userRepo.create(user);
-
-    await this.kafkaProducerRepo.sendMessage('user.created', {
-      email: user.email,
-      emailVerificationToken: verificationToken,
-    });
+    try {
+      await this.emailUseCase.sendVerificationEmail(
+        user.email,
+        verificationToken,
+      );
+    } catch {
+      throw new InternalServerErrorException(
+        'Account created successfully, but failed to send verification email. Please resend verification email or try again later.',
+      );
+    }
 
     return {
       id: user.id!,
@@ -106,10 +123,8 @@ export class AuthUseCase {
   }
 
   async login(dto: LoginReq): Promise<LoginRes> {
-    // Try to find the user by email first
     let user = await this.userRepo.findByEmail(dto.identifier);
 
-    // If not found by email, try by username
     if (!user) {
       user = await this.userRepo.findByUsername(dto.identifier);
     }
@@ -258,47 +273,54 @@ export class AuthUseCase {
       isUserFirstTime: user.isUserFirstTime,
     }));
   }
-  // src/auth/usecase/auth.usecase.ts
-  async resendVerificationEmail(email: string): Promise<void> {
-    const existingUser = await this.userRepo.findByEmail(email);
 
-    if (!existingUser) {
-      throw new NotFoundException('User not found');
-    }
+  async resendVerificationEmail(
+    email: string,
+  ): Promise<{ success: boolean; message: string }> {
+    try {
+      const user = await this.userRepo.findByEmail(email);
+      if (!user) {
+        throw new NotFoundException('User not found');
+      }
 
-    // If token expired → generate a new one
-    if (
-      existingUser.emailVerificationTokenExpiresAt &&
-      existingUser.emailVerificationTokenExpiresAt < new Date()
-    ) {
-      const verificationToken = uuidv4();
-      const expiresAt = new Date();
-      expiresAt.setHours(expiresAt.getHours() + 24);
+      if (user.isEmailVerified) {
+        throw new BadRequestException('Email already verified');
+      }
 
-      await this.userRepo.updateVerificationToken(
-        existingUser.id!,
-        verificationToken,
-        expiresAt,
+      let verificationToken = user.emailVerificationToken;
+      if (
+        !verificationToken ||
+        user.emailVerificationTokenExpiresAt! < new Date()
+      ) {
+        verificationToken = uuidv4();
+        const expiresAt = new Date();
+        expiresAt.setHours(expiresAt.getHours() + 24);
+
+        await this.userRepo.updateVerificationToken(
+          user.id!,
+          verificationToken,
+          expiresAt,
+        );
+      }
+
+      await this.emailUseCase.sendVerificationEmail(email, verificationToken);
+
+      return {
+        success: true,
+        message: 'Verification email sent successfully',
+      };
+    } catch (error) {
+      if (
+        error instanceof NotFoundException ||
+        error instanceof BadRequestException
+      ) {
+        throw error;
+      }
+
+      throw new InternalServerErrorException(
+        'Failed to send verification email. Please try again later.',
       );
-
-      await this.kafkaProducerRepo.sendMessage('user.created', {
-        email: existingUser.email,
-        emailVerificationToken: verificationToken,
-      });
-
-      return;
     }
-
-    // If already verified → don't resend
-    if (existingUser.isEmailVerified) {
-      throw new ConflictException('Email is already verified');
-    }
-
-    // If not expired yet → resend same token
-    await this.kafkaProducerRepo.sendMessage('user.created', {
-      email: existingUser.email,
-      emailVerificationToken: existingUser.emailVerificationToken,
-    });
   }
 
   async updateNotFirstUser(userId: string): Promise<void> {

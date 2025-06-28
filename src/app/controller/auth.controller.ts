@@ -109,15 +109,12 @@ export class AuthController {
     status: 200,
     description: 'User updated to be not a first user',
   })
-  // Changed method name to follow NestJS convention and removed unused @Body() dto
   async updateNotFirstUser(
     @Headers('authorization') authHeader: string,
   ): Promise<{ message: string }> {
-    // Validate token to get the user ID
     const validatedUser = await this.authUseCase.validateToken({
       token: authHeader,
     });
-    // Call the useCase method to update the flag
     await this.authUseCase.updateNotFirstUser(validatedUser.userId);
     return { message: 'Success' };
   }
