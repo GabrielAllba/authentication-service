@@ -11,7 +11,7 @@ import { EmailUseCase } from '../usecase/email.usecase';
         options: {
           url: process.env.EMAIL_SERVICE_URL,
           package: 'emailservice',
-          protoPath: '../contract/email-service.proto',
+          protoPath: './contract/email-service.proto',
         },
       },
     ]),

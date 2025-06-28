@@ -14,7 +14,7 @@ async function bootstrap() {
       options: {
         url: `0.0.0.0:${process.env.PROJECT_HUB_ACCOUNT_SERVICE_GRPC_PORT}`,
         package: 'authenticationservice',
-        protoPath: '../contract/authentication-service.proto',
+        protoPath: './contract/authentication-service.proto',
       },
     },
   );
@@ -48,6 +48,7 @@ async function bootstrap() {
   );
 
   await app.listen(process.env.PORT || 3000);
+
   console.log(
     `🚀Authentication service running on http://localhost:${process.env.PORT || 3000}`,
   );

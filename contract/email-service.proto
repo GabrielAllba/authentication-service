@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package emailservice;
+
+service EmailService {
+  rpc SendVerificationEmail(SendVerificationEmailRequest) returns (SendVerificationEmailResponse){}
+}
+
+message SendVerificationEmailRequest {
+  string email = 1;
+  string emailVerificationToken = 2;
+}
+
+message SendVerificationEmailResponse {
+  bool success = 1;
+}
